@@ -8,41 +8,35 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          
-
-      - uses: actions/setup-java@v4
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - uses: android-actions/setup-android@v3
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Add Android
-        run: npx cap add android
-
-      - name: Sync
-        run: npx cap sync android
-
-      - name: Permission
-        run: chmod +x android/gradlew
-
-      - name: Build APK
+      - name: Copy www files into Android assets
         run: |
-          cd android
-          ./gradlew assembleDebug --no-daemon
+          cp -r diacare-android/www/. diacare-android/android-project/app/src/main/assets/www/
+
+      - name: Make gradlew executable
+        run: chmod +x diacare-android/android-project/gradlew
+
+      - name: Build Debug APK
+        run: |
+          cd diacare-android/android-project
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: DiaCare-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: diacare-android/android-project/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
